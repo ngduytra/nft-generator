@@ -1,8 +1,6 @@
 import {
   bundlrStorage,
-  BundlrStorageDriver,
   CreateNftInput,
-  keypairIdentity,
   Metadata,
   Metaplex,
   NftWithToken,
@@ -91,13 +89,7 @@ class MetaplexNFT {
   }
 
   uploadMetadata = async (metadata: UploadMetadataInput) => {
-    console.log('thong tin meta data', metadata)
-    const uri = await this._metaplex
-      .nfts()
-      .uploadMetadata({
-        metadata,
-      })
-      .run()
+    const uri = await this._metaplex.nfts().uploadMetadata(metadata).run()
     return uri
   }
 
