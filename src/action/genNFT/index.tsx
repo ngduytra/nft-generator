@@ -3,8 +3,6 @@ import React, { useState } from 'react'
 import { Button, Col, Row, Modal } from 'antd'
 import ModalContent from './modalContent'
 
-import { useNft } from 'hooks/useNft'
-
 const GenNFT = () => {
   const [visible, setVisible] = useState(false)
 

@@ -7,7 +7,6 @@ import { AppState } from 'model'
 import { setHomeTab } from 'model/main.controller'
 
 import { HOME_TAB } from 'constant'
-import { useAppRoute } from '@sentre/senhub'
 import { useAppRouter } from 'hooks/useAppRouter'
 
 type LayoutProps = { children: any }
