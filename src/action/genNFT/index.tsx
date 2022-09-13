@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 
 import { Button, Col, Row, Modal } from 'antd'
-import ModalContent from './modalContent'
+import { ModalContent } from './modalContent'
 
 const GenNFT = () => {
   const [visible, setVisible] = useState(false)

@@ -17,10 +17,10 @@ export class ConcreteMetaplexAdapter {
     if (this.wallet.signMessage === undefined) {
       throw new Error('signMessage')
     }
-    const newMessage = new TextDecoder().decode(message)
-    const data: SignedMessage = await this.wallet.signMessage(newMessage)
 
-    return new TextEncoder().encode(data.signature)
+    const newMessage = new TextDecoder().decode(message)
+    const data = await this.wallet.signMessage(newMessage)
+    return Uint8Array.from(Buffer.from(data.signature, 'hex'))
   }
 
   public async signTransaction(transaction: Transaction): Promise<Transaction> {

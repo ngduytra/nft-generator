@@ -1,6 +1,11 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 import { util } from '@sentre/senhub'
 import { PublicKey } from '@solana/web3.js'
+import {
+  MetaplexFile,
+  toMetaplexFileFromBrowser,
+} from '@metaplex-foundation/js'
+import { RcFile, UploadChangeParam } from 'antd/lib/upload/interface'
 
 import {
   Button,
@@ -13,23 +18,42 @@ import {
   Tooltip,
   Typography,
   Switch,
+  Upload,
+  message,
+  Card,
 } from 'antd'
 import IonIcon from '@sentre/antd-ionicon'
 
 import { useNft } from 'hooks/useNft'
-import { notifyError, notifySuccess } from 'helper'
+import { fileToBase64, notifyError, notifySuccess } from 'helper'
 
-const ModalContent = () => {
-  const [isNewMetadata, setIsNewMetadata] = useState(false)
+const beforeUpload = (file: RcFile) => {
+  const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png'
+  if (!isJpgOrPng) {
+    message.error('You can only upload JPG/PNG file!')
+  }
+  const isLt2M = file.size / 1024 / 1024 < 2
+  if (!isLt2M) {
+    message.error('Image must smaller than 2MB!')
+  }
+  return isJpgOrPng && isLt2M
+}
+
+export const ModalContent = () => {
+  const [loading, setLoading] = useState(false)
   const [name, setName] = useState('')
-  const [sellerFee, setSellerFee] = useState(0)
+  const [sellerFeeBasisPoints, setSellerFeeBasisPoints] = useState(0)
   const [symbol, setSymbol] = useState<string | undefined>()
   const [description, setDescription] = useState<string | undefined>('')
-  const [image, setImage] = useState<string | undefined>()
-  const [uri, setUri] = useState('')
+  const [image, setImage] = useState<MetaplexFile | string>('')
+  const [displayedImage, setDisplayedImage] = useState<
+    string | ArrayBuffer | null
+  >('')
   const [externalUrl, setExternalUrl] = useState<string | undefined>()
   const [isCollection, setIsCollection] = useState(false)
   const [numberOfCollection, setNumberOfCollection] = useState(0)
+  const [isImageLink, setIsImageLink] = useState(false)
+
   const [attributes, setAttributes] = useState<
     Array<{
       trait_type?: string
@@ -64,27 +88,30 @@ const ModalContent = () => {
   const nftMachine = useNft()
 
   const genNFT = async () => {
+    setLoading(true)
     try {
       if (!nftMachine) return
-      // const { uri } = await nftMachine.uploadMetadata({
-      //   name: name,
-      //   symbol: symbol,
-      //   description: description,
-      //   seller_fee_basis_points: sellerFee,
-      //   image: image,
-      //   external_url: externalUrl,
-      //   attributes: attributes,
-      //   properties: {
-      //     creators: creators,
-      //     files: files,
-      //   },
-      //   collection: collectionInfo,
-      // })
+
+      const uri = await nftMachine.uploadMetadata({
+        name,
+        symbol,
+        description,
+        seller_fee_basis_points: sellerFeeBasisPoints,
+        image,
+        external_url: externalUrl,
+        attributes,
+        collection: collectionInfo,
+        properties: {
+          files,
+          creators,
+        },
+      })
+
       if (isCollection) {
         const collectionNFT = await nftMachine.createNFT({
           uri: uri,
           name: name,
-          sellerFeeBasisPoints: sellerFee,
+          sellerFeeBasisPoints,
           isCollection,
         })
 
@@ -92,7 +119,7 @@ const ModalContent = () => {
           await nftMachine.createNFT({
             uri: uri,
             name: name + `${key}`,
-            sellerFeeBasisPoints: sellerFee,
+            sellerFeeBasisPoints,
             collection: collectionNFT.address,
           })
         }
@@ -105,7 +132,7 @@ const ModalContent = () => {
         await nftMachine.createNFT({
           uri: uri,
           name: name,
-          sellerFeeBasisPoints: sellerFee,
+          sellerFeeBasisPoints,
         })
         return notifySuccess(`Create NFT ${name}`, '')
       }
@@ -113,13 +140,15 @@ const ModalContent = () => {
       await nftMachine.createNFT({
         uri: uri,
         name: name,
-        sellerFeeBasisPoints: sellerFee,
+        sellerFeeBasisPoints,
         collection: new PublicKey(`${belongToCollection}`),
       })
 
       notifySuccess(`Create NFT ${name}`, '')
     } catch (err) {
       notifyError(err)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -150,20 +179,16 @@ const ModalContent = () => {
     return setFiles(newFiles)
   }
 
-  // Temp for available uri
-  const getNFTImage = useCallback(async () => {
-    try {
-      const metadata = await (await fetch(uri)).json()
-      if (!metadata.image) return setImage('')
-      setImage(metadata?.image)
-    } catch (e) {
-      setImage('')
-    }
-  }, [uri])
-
-  useEffect(() => {
-    getNFTImage()
-  }, [getNFTImage])
+  const onChangeImage = async (file: UploadChangeParam) => {
+    const { fileList } = file
+    const originFile = fileList[0].originFileObj as File
+    const metaplexImage = await toMetaplexFileFromBrowser(originFile)
+    fileToBase64(originFile, (imgBase64: string | ArrayBuffer | null) => {
+      setDisplayedImage(imgBase64)
+      setImage(metaplexImage)
+      return
+    })
+  }
 
   return (
     <Row>
@@ -171,16 +196,6 @@ const ModalContent = () => {
         <Typography.Title level={2} className="text-center">
           Create NFTs, Raise your Style
         </Typography.Title>
-      </Col>
-      <Col span={24}>
-        <Row justify="end" align="middle">
-          <Typography.Text>Upload new metadata?</Typography.Text>{' '}
-          <Switch
-            checked={isNewMetadata}
-            onChange={() => setIsNewMetadata(!isNewMetadata)}
-            size="small"
-          />
-        </Row>
       </Col>
       <Col>
         <Row gutter={[12, 12]}>
@@ -191,6 +206,67 @@ const ModalContent = () => {
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
+          </Col>
+          <Col span={24}>
+            <Row>
+              <Col span={12}>
+                <Typography.Title level={5}>Image</Typography.Title>
+              </Col>
+              <Col span={12}>
+                <Space
+                  style={{ width: '100%' }}
+                  direction="vertical"
+                  align="end"
+                >
+                  <Switch
+                    checked={isImageLink}
+                    onChange={() => setIsImageLink(!isImageLink)}
+                    size="small"
+                  />
+                </Space>
+              </Col>
+              <Col span={24}>
+                {isImageLink && typeof image === 'string' ? (
+                  <Input
+                    value={image}
+                    onChange={(e) => setImage(e.target.value)}
+                  />
+                ) : displayedImage ? (
+                  <Card>
+                    <Image
+                      src={displayedImage.toString() || ''}
+                      preview={false}
+                    />
+                    <Button
+                      onClick={() => {
+                        setImage('')
+                        setDisplayedImage('')
+                      }}
+                    >
+                      Remove Image
+                    </Button>
+                  </Card>
+                ) : (
+                  <Upload
+                    name="avatar"
+                    listType="picture-card"
+                    accept="image/png,image/jpg,image/webp"
+                    className="avatar-uploader"
+                    showUploadList={false}
+                    // action="https://www.mocky.io/v2/5cc8019d300000980a055e76"
+                    beforeUpload={beforeUpload}
+                    onChange={onChangeImage}
+                    maxCount={1}
+                    onRemove={() => {
+                      setImage('')
+                      return true
+                    }}
+                  >
+                    <IonIcon name="add-outline" />
+                  </Upload>
+                )}
+              </Col>
+            </Row>
           </Col>
 
           <Col span={24}>
@@ -203,9 +279,8 @@ const ModalContent = () => {
               </Tooltip>
             </Space>
             <InputNumber
-              placeholder="Your Put, Their Thought"
-              value={sellerFee}
-              onChange={setSellerFee}
+              value={sellerFeeBasisPoints}
+              onChange={setSellerFeeBasisPoints}
             />
           </Col>
           <Col span={24}>
@@ -225,6 +300,17 @@ const ModalContent = () => {
               <Col span={24}>
                 {isCollection ? (
                   <Row gutter={[4, 4]}>
+                    <Col span={24}>
+                      <Typography.Text>Number of NFT</Typography.Text>{' '}
+                      <InputNumber
+                        placeholder="What is the number of NFT that you want to created?"
+                        value={numberOfCollection}
+                        onChange={(val) => setNumberOfCollection(val)}
+                      />
+                    </Col>
+                  </Row>
+                ) : (
+                  <Row gutter={[12, 12]}>
                     <Col span={12}>
                       <Typography.Text>Name</Typography.Text>
                       <Input
@@ -252,243 +338,211 @@ const ModalContent = () => {
                       />
                     </Col>
                     <Col span={24}>
-                      <Typography.Text>Number of NFT</Typography.Text>
-                      <InputNumber
-                        placeholder="What is the number of NFT that you want to created?"
-                        value={numberOfCollection}
-                        onChange={(val) => setNumberOfCollection(val)}
+                      <Typography.Text>Collection address</Typography.Text>
+                      <Input
+                        placeholder="AoqVpXWs4mnXAJp6L...."
+                        value={belongToCollection}
+                        onChange={(e) => setBelongToCollection(e.target.value)}
                       />
                     </Col>
                   </Row>
-                ) : (
-                  <Input
-                    placeholder="Collection address"
-                    value={belongToCollection}
-                    onChange={(e) => setBelongToCollection(e.target.value)}
-                  />
                 )}
               </Col>
             </Row>
           </Col>
-          {isNewMetadata ? (
-            <Col span={24}>
-              <Space style={{ width: '100%' }} align="center">
-                <Typography.Title level={5}>Metadata</Typography.Title>
-                <Tooltip title="Infomation of your NFT">
-                  <IonIcon name="information-circle-outline" />
-                </Tooltip>
-              </Space>
-              <Row gutter={[12, 12]}>
-                <Col span={10}>
-                  <Typography.Text> Symbol</Typography.Text>
-                  <Input
-                    placeholder="symbol"
-                    value={symbol}
-                    onChange={(e) => setSymbol(e.target.value)}
-                  />
-                </Col>
-                <Col span={4}></Col>
-                <Col span={10}>
-                  <Typography.Text> Description</Typography.Text>
-                  <Input
-                    placeholder="Come from where?"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                  />
-                </Col>
-
-                <Col span={10}>
-                  <Typography.Text> External Url</Typography.Text>
-                  <Input
-                    placeholder="External links"
-                    value={externalUrl}
-                    onChange={(e) => setExternalUrl(e.target.value)}
-                  />
-                </Col>
-                <Col span={4}></Col>
-                <Col span={10}>
-                  <Typography.Text> Image</Typography.Text>
-                  <Input
-                    placeholder="NFT thumnail"
-                    value={image}
-                    onChange={(e) => setImage(e.target.value)}
-                  />
-                </Col>
-                <Col span={24}>
-                  <Row gutter={[12, 12]}>
-                    <Col span={24}>
-                      <Typography.Text> Attributes</Typography.Text>
-                    </Col>
-                    <Col span={24}>
-                      <Space direction="vertical">
-                        {attributes.map((attribute, idx) => (
-                          <Space style={{ width: '100%' }}>
-                            <Input
-                              placeholder="type"
-                              value={attribute.trait_type}
-                              onChange={(e) =>
-                                onChangeAttributes(idx, {
-                                  ...attribute,
-                                  trait_type: e.target.value,
-                                })
-                              }
-                            />
-                            <Input
-                              placeholder="value"
-                              value={attribute.value}
-                              onChange={(e) =>
-                                onChangeAttributes(idx, {
-                                  ...attribute,
-                                  value: e.target.value,
-                                })
-                              }
-                            />
-                          </Space>
-                        ))}
-                      </Space>
-                    </Col>
-                    <Col>
-                      <Button
-                        block
-                        ghost
-                        onClick={() => {
-                          const newAttributes = [
-                            ...attributes,
-                            { trait_type: '', value: '' },
-                          ]
-                          setAttributes(newAttributes)
-                        }}
-                        size="small"
-                      >
-                        Add Attribute
-                      </Button>
-                    </Col>
-                  </Row>
-                </Col>
-
-                <Col>
-                  <Typography.Text>Properties</Typography.Text>
-                  <Row gutter={[12, 12]}>
-                    <Col span={24}>
-                      <Typography.Text style={{ fontSize: 12 }}>
-                        {' '}
-                        Creators
-                      </Typography.Text>
-                    </Col>
-                    <Col span={24}>
-                      <Space direction="vertical">
-                        {creators.map((creator, idx) => (
-                          <Space style={{ width: '100%' }}>
-                            <Input
-                              placeholder="Address"
-                              value={creator.address}
-                              onChange={(e) =>
-                                onChangeCreators(idx, {
-                                  ...creator,
-                                  address: e.target.value,
-                                })
-                              }
-                            />
-                            <InputNumber
-                              placeholder="Share"
-                              value={creator.share}
-                              onChange={(val) =>
-                                onChangeCreators(idx, {
-                                  ...creator,
-                                  share: val,
-                                })
-                              }
-                            />
-                          </Space>
-                        ))}
-                      </Space>
-                    </Col>
-                    <Col>
-                      <Button
-                        block
-                        ghost
-                        onClick={() => {
-                          const newCreators = [...creators, { address: '' }]
-                          setCreators(newCreators)
-                        }}
-                        size="small"
-                      >
-                        Add Creator
-                      </Button>
-                    </Col>
-                  </Row>
-                  <Row gutter={[12, 12]}>
-                    <Col span={24}>
-                      <Typography.Text style={{ fontSize: 12 }}>
-                        {' '}
-                        Files
-                      </Typography.Text>
-                    </Col>
-                    <Col span={24}>
-                      <Space direction="vertical" size={8}>
-                        {files.map((file, idx) => (
-                          <Space style={{ width: '100%' }}>
-                            <Input
-                              placeholder="File type"
-                              value={file.type}
-                              onChange={(e) =>
-                                onChangeFiles(idx, {
-                                  ...file,
-                                  type: e.target.value,
-                                })
-                              }
-                            />
-                            <Input
-                              placeholder="Uri of file"
-                              value={file.uri}
-                              onChange={(e) =>
-                                onChangeFiles(idx, {
-                                  ...file,
-                                  uri: e.target.value,
-                                })
-                              }
-                            />
-                          </Space>
-                        ))}
-                      </Space>
-                    </Col>
-                    <Col>
-                      <Button
-                        block
-                        ghost
-                        onClick={() => {
-                          const newFiles = [...files, { type: '', uri: '' }]
-                          setFiles(newFiles)
-                        }}
-                        size="small"
-                      >
-                        Add file
-                      </Button>
-                    </Col>
-                  </Row>
-                </Col>
-              </Row>
-            </Col>
-          ) : (
-            <Col span={24}>
-              <Row gutter={[8, 8]}>
-                <Col span={24}>
-                  <Typography.Title level={5}>URI</Typography.Title>
-                  <Input
-                    placeholder="Your Uri"
-                    value={uri}
-                    onChange={(e) => setUri(e.target.value)}
-                  />
-                </Col>
-                <Col>
-                  <Image src={image} />
-                </Col>
-              </Row>
-            </Col>
-          )}
 
           <Col span={24}>
-            <Button onClick={genNFT} block>
+            <Space style={{ width: '100%' }} align="center">
+              <Typography.Title level={5}>Metadata</Typography.Title>
+              <Tooltip title="Infomation of your NFT">
+                <IonIcon name="information-circle-outline" />
+              </Tooltip>
+            </Space>
+            <Row gutter={[12, 12]}>
+              <Col span={10}>
+                <Typography.Text> Symbol</Typography.Text>
+                <Input
+                  placeholder="symbol"
+                  value={symbol}
+                  onChange={(e) => setSymbol(e.target.value)}
+                />
+              </Col>
+              <Col span={4}></Col>
+              <Col span={10}>
+                <Typography.Text> Description</Typography.Text>
+                <Input
+                  placeholder="Come from where?"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </Col>
+
+              <Col span={10}>
+                <Typography.Text> External Url</Typography.Text>
+                <Input
+                  placeholder="External links"
+                  value={externalUrl}
+                  onChange={(e) => setExternalUrl(e.target.value)}
+                />
+              </Col>
+              <Col span={4} />
+              <Col span={24}>
+                <Row gutter={[12, 12]}>
+                  <Col span={24}>
+                    <Typography.Text> Attributes</Typography.Text>
+                  </Col>
+                  <Col span={24}>
+                    <Space direction="vertical">
+                      {attributes.map((attribute, idx) => (
+                        <Space style={{ width: '100%' }}>
+                          <Input
+                            placeholder="type"
+                            value={attribute.trait_type}
+                            onChange={(e) =>
+                              onChangeAttributes(idx, {
+                                ...attribute,
+                                trait_type: e.target.value,
+                              })
+                            }
+                          />
+                          <Input
+                            placeholder="value"
+                            value={attribute.value}
+                            onChange={(e) =>
+                              onChangeAttributes(idx, {
+                                ...attribute,
+                                value: e.target.value,
+                              })
+                            }
+                          />
+                        </Space>
+                      ))}
+                    </Space>
+                  </Col>
+                  <Col>
+                    <Button
+                      block
+                      ghost
+                      onClick={() => {
+                        const newAttributes = [
+                          ...attributes,
+                          { trait_type: '', value: '' },
+                        ]
+                        setAttributes(newAttributes)
+                      }}
+                      size="small"
+                    >
+                      Add Attribute
+                    </Button>
+                  </Col>
+                </Row>
+              </Col>
+
+              <Col>
+                <Typography.Text>Properties</Typography.Text>
+                <Row gutter={[12, 12]}>
+                  <Col span={24}>
+                    <Typography.Text style={{ fontSize: 12 }}>
+                      {' '}
+                      Creators
+                    </Typography.Text>
+                  </Col>
+                  <Col span={24}>
+                    <Space direction="vertical">
+                      {creators.map((creator, idx) => (
+                        <Space style={{ width: '100%' }}>
+                          <Input
+                            placeholder="Address"
+                            value={creator.address}
+                            onChange={(e) =>
+                              onChangeCreators(idx, {
+                                ...creator,
+                                address: e.target.value,
+                              })
+                            }
+                          />
+                          <InputNumber
+                            placeholder="Share"
+                            value={creator.share}
+                            onChange={(val) =>
+                              onChangeCreators(idx, {
+                                ...creator,
+                                share: val,
+                              })
+                            }
+                          />
+                        </Space>
+                      ))}
+                    </Space>
+                  </Col>
+                  <Col>
+                    <Button
+                      block
+                      ghost
+                      onClick={() => {
+                        const newCreators = [...creators, { address: '' }]
+                        setCreators(newCreators)
+                      }}
+                      size="small"
+                    >
+                      Add Creator
+                    </Button>
+                  </Col>
+                </Row>
+                <Row gutter={[12, 12]}>
+                  <Col span={24}>
+                    <Typography.Text style={{ fontSize: 12 }}>
+                      {' '}
+                      Files
+                    </Typography.Text>
+                  </Col>
+                  <Col span={24}>
+                    <Space direction="vertical" size={8}>
+                      {files.map((file, idx) => (
+                        <Space style={{ width: '100%' }}>
+                          <Input
+                            placeholder="File type"
+                            value={file.type}
+                            onChange={(e) =>
+                              onChangeFiles(idx, {
+                                ...file,
+                                type: e.target.value,
+                              })
+                            }
+                          />
+                          <Input
+                            placeholder="Uri of file"
+                            value={file.uri}
+                            onChange={(e) =>
+                              onChangeFiles(idx, {
+                                ...file,
+                                uri: e.target.value,
+                              })
+                            }
+                          />
+                        </Space>
+                      ))}
+                    </Space>
+                  </Col>
+                  <Col>
+                    <Button
+                      block
+                      ghost
+                      onClick={() => {
+                        const newFiles = [...files, { type: '', uri: '' }]
+                        setFiles(newFiles)
+                      }}
+                      size="small"
+                    >
+                      Add file
+                    </Button>
+                  </Col>
+                </Row>
+              </Col>
+            </Row>
+          </Col>
+          <Col span={24}>
+            <Button onClick={genNFT} block loading={loading}>
               Get Your Unique
             </Button>
           </Col>
@@ -497,5 +551,3 @@ const ModalContent = () => {
     </Row>
   )
 }
-
-export default ModalContent

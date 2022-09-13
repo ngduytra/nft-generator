@@ -4,7 +4,6 @@
   "private": true,
   "dependencies": {
     "@metaplex-foundation/js": "^0.15.0",
-    "@metaplex-foundation/js-plugin-nft-storage": "^0.1.1",
     "@reduxjs/toolkit": "^1.8.0",
     "@senswap/sen-js": "^1.4.0",
     "@sentre/antd-ionicon": "^1.0.38",
