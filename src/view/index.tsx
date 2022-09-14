@@ -2,7 +2,7 @@ import { Redirect, Route, Switch } from 'react-router-dom'
 
 import { Row, Col } from 'antd'
 import NFT from './nft'
-import Collection from './collection'
+import SPLToken from './splToken'
 import { useAppRouter } from 'hooks/useAppRouter'
 
 import './index.less'
@@ -15,7 +15,7 @@ const View = () => {
       <Col span={24}>
         <Switch>
           <Route path={`${appRoute}/nft`} component={NFT} />
-          <Route path={`${appRoute}/collection`} component={Collection} />
+          <Route path={`${appRoute}/token`} component={SPLToken} />
           <Route path="*">
             <Redirect to={`${appRoute}/nft`} />
           </Route>

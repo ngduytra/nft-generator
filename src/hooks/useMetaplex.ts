@@ -4,7 +4,7 @@ import { net } from '@sentre/senhub'
 import MetaplexNFT from 'lib/metaplex'
 import { clusterAdapter } from 'helper'
 
-export const useNft = () => {
+export const useMetaplex = () => {
   const [nftMachine, setNftMachine] = useState<MetaplexNFT>()
   const initializeNftMachine = useCallback(async () => {
     const newNftMachine = await MetaplexNFT.initializeMetaplex(

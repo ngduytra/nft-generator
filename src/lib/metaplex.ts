@@ -3,15 +3,17 @@ import {
   CreateNftInput,
   Metadata,
   Metaplex,
+  MetaplexFile,
   NftWithToken,
   UploadMetadataInput,
   walletAdapterIdentity,
 } from '@metaplex-foundation/js'
 import { util } from '@sentre/senhub'
 import { Connection, clusterApiUrl, Cluster, PublicKey } from '@solana/web3.js'
+
 import { ConcreteMetaplexAdapter } from './walletMetaplexAdapter'
 
-const DEFAULT_RPC_ENDPOINT = 'devnet'
+const DEFAULT_RPC_ENDPOINT = 'mainnet-beta'
 const wallet = window.sentre.wallet
 
 class MetaplexNFT {
@@ -23,10 +25,10 @@ class MetaplexNFT {
   }
 
   static async initializeMetaplex(rpcEndpoint: Cluster = DEFAULT_RPC_ENDPOINT) {
+    const connection = new Connection(clusterApiUrl('devnet'))
+
     if (!MetaplexNFT.instance) {
-      const newMetaplex = Metaplex.make(
-        new Connection(clusterApiUrl(rpcEndpoint), 'confirmed'),
-      )
+      const newMetaplex = Metaplex.make(connection)
         .use(
           walletAdapterIdentity(
             await ConcreteMetaplexAdapter.createPublicKey(wallet),
@@ -88,9 +90,13 @@ class MetaplexNFT {
     return nftList
   }
 
-  uploadMetadata = async (metadata: UploadMetadataInput) => {
-    const uri = await this._metaplex.nfts().uploadMetadata(metadata).run()
+  uploadMetadata = async (data: UploadMetadataInput) => {
+    const { uri } = await this._metaplex.nfts().uploadMetadata(data).run()
     return uri
+  }
+
+  uploadFile = async (data: MetaplexFile) => {
+    return await this._metaplex.storage().upload(data)
   }
 
   printNewEdition = async (originalMint: PublicKey) => {
@@ -99,6 +105,13 @@ class MetaplexNFT {
       .printNewEdition({ originalMint })
       .run()
     return printedNft
+  }
+
+  getCost = async (file: any) => {
+    const price = (
+      await this._metaplex.storage().getUploadPriceForFile(file)
+    ).basisPoints.toString(10)
+    return price
   }
 }
 
