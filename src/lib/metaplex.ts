@@ -3,6 +3,7 @@ import {
   CreateNftInput,
   Metadata,
   Metaplex,
+  MetaplexFile,
   NftWithToken,
   UploadMetadataInput,
   walletAdapterIdentity,
@@ -92,6 +93,10 @@ class MetaplexNFT {
   uploadMetadata = async (data: UploadMetadataInput) => {
     const { uri } = await this._metaplex.nfts().uploadMetadata(data).run()
     return uri
+  }
+
+  uploadFile = async (data: MetaplexFile) => {
+    return await this._metaplex.storage().upload(data)
   }
 
   printNewEdition = async (originalMint: PublicKey) => {

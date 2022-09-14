@@ -2,8 +2,8 @@ import { PublicKey, Transaction } from '@solana/web3.js'
 
 export class ConcreteMetaplexAdapter {
   wallet: WalletInterface
-  publicKey: PublicKey | null
-  constructor(publicKey: PublicKey | null, wallet: WalletInterface) {
+  publicKey: PublicKey
+  constructor(publicKey: PublicKey, wallet: WalletInterface) {
     this.publicKey = publicKey
     this.wallet = wallet
   }

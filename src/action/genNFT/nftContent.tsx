@@ -5,7 +5,7 @@ import {
   MetaplexFile,
   toMetaplexFileFromBrowser,
 } from '@metaplex-foundation/js'
-import { RcFile, UploadChangeParam } from 'antd/lib/upload/interface'
+import { UploadChangeParam } from 'antd/lib/upload/interface'
 
 import {
   Button,
@@ -19,27 +19,14 @@ import {
   Typography,
   Switch,
   Upload,
-  message,
   Card,
 } from 'antd'
 import IonIcon from '@sentre/antd-ionicon'
 
-import { useNft } from 'hooks/useNft'
-import { fileToBase64, notifyError, notifySuccess } from 'helper'
+import { useMetaplex } from 'hooks/useMetaplex'
+import { beforeUpload, fileToBase64, notifyError, notifySuccess } from 'helper'
 
-const beforeUpload = (file: RcFile) => {
-  const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png'
-  if (!isJpgOrPng) {
-    message.error('You can only upload JPG/PNG file!')
-  }
-  const isLt2M = file.size / 1024 / 1024 < 2
-  if (!isLt2M) {
-    message.error('Image must smaller than 2MB!')
-  }
-  return isJpgOrPng && isLt2M
-}
-
-export const ModalContent = () => {
+const NFTContent = () => {
   const [loading, setLoading] = useState(false)
   const [name, setName] = useState('')
   const [sellerFeeBasisPoints, setSellerFeeBasisPoints] = useState(0)
@@ -85,7 +72,7 @@ export const ModalContent = () => {
     string | undefined
   >()
 
-  const nftMachine = useNft()
+  const nftMachine = useMetaplex()
 
   const genNFT = async () => {
     setLoading(true)
@@ -551,3 +538,5 @@ export const ModalContent = () => {
     </Row>
   )
 }
+
+export default NFTContent

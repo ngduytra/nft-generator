@@ -1,15 +1,15 @@
 import React, { useState } from 'react'
 
 import { Button, Col, Row, Modal } from 'antd'
-import NFTContent from './nftContent'
+import SPLContent from './splContent'
 
-const GenNFT = () => {
+const GenSPLToken = () => {
   const [visible, setVisible] = useState(false)
 
   return (
     <Row>
       <Col>
-        <Button onClick={() => setVisible(true)}>Gen NFT</Button>
+        <Button onClick={() => setVisible(true)}>Gen Token</Button>
       </Col>
       <Modal
         visible={visible}
@@ -18,10 +18,10 @@ const GenNFT = () => {
         footer={null}
         centered={true}
       >
-        <NFTContent />
+        <SPLContent />
       </Modal>
     </Row>
   )
 }
 
-export default GenNFT
+export default GenSPLToken
