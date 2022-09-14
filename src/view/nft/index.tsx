@@ -13,7 +13,7 @@ const NFT = () => {
         </Col>
         <Col span={24}>
           <Typography.Title className="text-center">
-            This is a collection from Divegent agent
+            Create a NFT
           </Typography.Title>
         </Col>
 
