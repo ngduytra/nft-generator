@@ -72,6 +72,8 @@ const SPLContent = () => {
 
   const connection = new Connection(rpc)
 
+  console.log(error)
+
   const genSplToken = async () => {
     setLoading(true)
     try {
