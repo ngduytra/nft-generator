@@ -16,9 +16,9 @@ const Layout = ({ children }: LayoutProps) => {
   const dispatch = useDispatch()
   const { pushHistory } = useAppRouter()
   return (
-    <Row justify="center" style={{ paddingBottom: 12 }} className="ree">
-      <Col span={12}>
-        <Row gutter={[24, 24]} justify="center">
+    <Row justify="center" style={{ paddingBottom: 12 }}>
+      <Col lg={12}>
+        <Row gutter={[60, 60]} justify="center">
           <Col xs={12} lg={6}>
             <Segmented
               options={Object.entries(HOME_TAB).map(([key, val]) => {

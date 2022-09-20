@@ -27,7 +27,6 @@ export class ConcreteMetaplexAdapter {
     if (this.wallet.signTransaction === undefined) {
       throw new Error('signTransaction')
     }
-    console.log('chay vao sign Transaction!', transaction)
 
     return this.wallet.signTransaction(transaction)
   }
@@ -38,7 +37,6 @@ export class ConcreteMetaplexAdapter {
     if (this.wallet.signAllTransactions === undefined) {
       throw new Error('signAllTransactions')
     }
-    console.log('cgay vao signALlTransaction:')
 
     return this.wallet.signAllTransactions(transactions)
   }

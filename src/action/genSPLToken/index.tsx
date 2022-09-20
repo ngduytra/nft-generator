@@ -9,10 +9,12 @@ const GenSPLToken = () => {
   return (
     <Row>
       <Col>
-        <Button onClick={() => setVisible(true)}>Gen Token</Button>
+        <Button onClick={() => setVisible(true)} type="primary">
+          Gen Token
+        </Button>
       </Col>
       <Modal
-        visible={visible}
+        open={visible}
         destroyOnClose={true}
         onCancel={() => setVisible(false)}
         footer={null}
