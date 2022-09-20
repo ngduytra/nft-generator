@@ -5,7 +5,7 @@ import { HOME_TAB } from 'constant'
  * Interface & Utility
  */
 
-export type State = {
+export type MainState = {
   homeTab: string
 }
 
@@ -14,7 +14,7 @@ export type State = {
  */
 
 const NAME = 'main'
-const initialState: State = {
+const initialState: MainState = {
   homeTab: HOME_TAB.NFT,
 }
 

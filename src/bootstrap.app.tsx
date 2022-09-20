@@ -1,5 +1,5 @@
 import { Provider } from 'react-redux'
-import { UIProvider } from '@sentre/senhub'
+import { AntdProvider } from '@sentre/senhub'
 
 import './static/styles/light.less'
 import './static/styles/dark.less'
@@ -15,11 +15,11 @@ const {
 
 export const Page = () => {
   return (
-    <UIProvider appId={appId} antd>
+    <AntdProvider appId={appId} prefixCls={appId}>
       <Provider store={model}>
         <View />
       </Provider>
-    </UIProvider>
+    </AntdProvider>
   )
 }
 

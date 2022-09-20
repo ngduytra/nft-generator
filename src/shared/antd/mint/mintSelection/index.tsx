@@ -43,7 +43,7 @@ const MintSelection = ({
         </Space>
       </Button>
       <Modal
-        visible={visible}
+        open={visible}
         onCancel={() => setVisible(false)}
         footer={null}
         closable={false}

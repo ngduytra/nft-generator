@@ -1,43 +1,45 @@
-import { Card, Col, Row, Space, Typography } from 'antd'
+import { useEffect } from 'react'
+import { useDispatch } from 'react-redux'
+
+import { Col, Row, Space, Typography } from 'antd'
 import Layout from 'component/layout'
 import GenSPLToken from 'action/genSPLToken'
+import NftCard from 'component/nftCard'
+
+import { setHomeTab } from 'model/main.controller'
+import { HOME_TAB } from 'constant'
 
 const dummyArray = [1, 2, 3]
 
 const SPLToken = () => {
+  const dispatch = useDispatch()
+  useEffect(() => {
+    dispatch(setHomeTab(HOME_TAB.TOKEN))
+  })
+
   return (
     <Layout>
-      <Row gutter={[24, 24]} justify="center">
+      <Row justify="center">
         <Col span={24}>
-          <Typography.Title className="text-center">SPL Token</Typography.Title>
+          <Row>
+            <Col>
+              <Typography.Title level={2}>Your Token</Typography.Title>
+            </Col>
+            <Col flex={1}>
+              <Space style={{ width: '100%' }} direction="vertical" align="end">
+                <GenSPLToken />
+              </Space>
+            </Col>
+          </Row>
         </Col>
         <Col span={24}>
-          <Typography.Title className="text-center">
-            Create a SPL Token with metadata
-          </Typography.Title>
-        </Col>
-        <Col span={24}>
-          <Space style={{ width: '100%' }} direction="vertical" align="center">
-            <GenSPLToken />
-          </Space>
-        </Col>
-        <Col span={24}>
-          <Space size={8} style={{ width: '100%' }} direction="vertical">
+          <Row gutter={[24, 24]}>
             {dummyArray.map((val, index) => (
-              <Card
-                key={index}
-                style={{
-                  background: 'linear-gradient(180deg, #00ffee59, transparent)',
-                }}
-              >
-                <Row>
-                  <Col>
-                    <Typography.Text>SPL Token {val}</Typography.Text>
-                  </Col>
-                </Row>
-              </Card>
+              <Col span={8}>
+                <NftCard />
+              </Col>
             ))}
-          </Space>
+          </Row>
         </Col>
       </Row>
     </Layout>

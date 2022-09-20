@@ -1,5 +1,5 @@
 {
-  "name": "module-template",
+  "name": "nft",
   "version": "3.2.15",
   "private": true,
   "dependencies": {
@@ -8,10 +8,10 @@
     "@senswap/sen-js": "^1.4.0",
     "@sentre/antd-ionicon": "^1.0.38",
     "@sentre/react-lazyload": "^3.2.2",
-    "@sentre/senhub": "^3.2.15",
+    "@sentre/senhub": "^3.3.2",
     "@solana/spl-token": "^0.3.5",
     "@solana/web3.js": "^1.53.0",
-    "antd": "^4.21.1",
+    "antd": "^4.23.1",
     "bn.js": "^5.2.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
@@ -22,7 +22,7 @@
     "web-vitals": "^2.1.1"
   },
   "scripts": {
-    "start": "REACT_APP_HMR=$PWD/src/bootstrap.app.tsx craco start",
+    "start": "craco start",
     "build": "craco build",
     "test": "craco test",
     "predeploy": "yarn build",
@@ -48,7 +48,7 @@
   },
   "devDependencies": {
     "@craco/craco": "^7.0.0-alpha.5",
-    "@sentre/craco-plugins": "^1.0.38",
+    "@sentre/craco-plugins": "^1.0.46",
     "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^12.1.2",
     "@testing-library/user-event": "^13.2.1",

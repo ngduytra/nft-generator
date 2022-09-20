@@ -8,3 +8,9 @@ export const HOME_TAB: Record<string, string> = {
 export const PROJECT_PUBLIC_KEY = new PublicKey(
   'DBHmm6zJP13cuVepfFwp8mXtNRATTsk4miZHWDZSg4Vv',
 )
+
+export enum NFTCreatingStep {
+  information,
+  metadata,
+  properties,
+}

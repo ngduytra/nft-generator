@@ -1,10 +1,12 @@
-import { Net } from '@sentre/senhub'
+import { Net, rpc } from '@sentre/senhub'
+import { Connection } from '@solana/web3.js'
 
 /**
  * Contructor
  */
 type Conf = {
   node: string
+  connection: Connection
 }
 
 const conf: Record<Net, Conf> = {
@@ -13,6 +15,7 @@ const conf: Record<Net, Conf> = {
    */
   devnet: {
     node: 'https://api.devnet.solana.com',
+    connection: new Connection(rpc),
   },
 
   /**
@@ -20,6 +23,7 @@ const conf: Record<Net, Conf> = {
    */
   testnet: {
     node: 'https://api.testnet.solana.com',
+    connection: new Connection(rpc),
   },
 
   /**
@@ -27,6 +31,7 @@ const conf: Record<Net, Conf> = {
    */
   mainnet: {
     node: 'https://api.mainnet-beta.solana.com',
+    connection: new Connection(rpc),
   },
 }
 

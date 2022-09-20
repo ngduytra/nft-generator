@@ -1,44 +1,34 @@
 import GenNFT from 'action/genNFT'
-import { Card, Col, Row, Space, Typography } from 'antd'
+import { Col, Row, Space, Typography } from 'antd'
 import Layout from 'component/layout'
+import NftCard from 'component/nftCard'
 
 const dummyArray = [1, 2, 3]
 
 const NFT = () => {
   return (
     <Layout>
-      <Row gutter={[24, 24]} justify="center">
+      <Row justify="center">
         <Col span={24}>
-          <Typography.Title className="text-center">NFT</Typography.Title>
+          <Row>
+            <Col>
+              <Typography.Title level={2}>Your NFT</Typography.Title>
+            </Col>
+            <Col flex={1}>
+              <Space style={{ width: '100%' }} align="end" direction="vertical">
+                <GenNFT />
+              </Space>
+            </Col>
+          </Row>
         </Col>
         <Col span={24}>
-          <Typography.Title className="text-center">
-            Create a NFT
-          </Typography.Title>
-        </Col>
-
-        <Col span={24}>
-          <Space style={{ width: '100%' }} align="center" direction="vertical">
-            <GenNFT />
-          </Space>
-        </Col>
-        <Col span={24}>
-          <Space size={8} style={{ width: '100%' }} direction="vertical">
+          <Row gutter={[24, 24]}>
             {dummyArray.map((val, index) => (
-              <Card
-                key={index}
-                style={{
-                  background: 'linear-gradient(180deg, #00ffee59, transparent)',
-                }}
-              >
-                <Row>
-                  <Col>
-                    <Typography.Text>NFT {val}</Typography.Text>
-                  </Col>
-                </Row>
-              </Card>
+              <Col span={8} key={index}>
+                <NftCard />
+              </Col>
             ))}
-          </Space>
+          </Row>
         </Col>
       </Row>
     </Layout>

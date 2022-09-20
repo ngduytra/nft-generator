@@ -4,7 +4,6 @@ import { message } from 'antd'
 import { RcFile } from 'antd/lib/upload/interface'
 
 export const clusterAdapter = (net: string): Cluster => {
-  console.log('network:', net)
   if (net === 'devnet') return 'devnet'
   if (net === 'testnet') return 'testnet'
   return 'mainnet-beta'

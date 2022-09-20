@@ -1,22 +1,11 @@
 import { useState } from 'react'
 import {
-  getMinimumBalanceForRentExemptMint,
-  createInitializeMintInstruction,
-  TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  MintLayout,
-  getAssociatedTokenAddress,
-  createAssociatedTokenAccountInstruction,
-  createMintToInstruction,
-} from '@solana/spl-token'
-import {
-  PROGRAM_ID,
-  DataV2,
-  createCreateMetadataAccountV2Instruction,
-} from '@metaplex-foundation/mpl-token-metadata'
+  MetaplexFile,
+  toMetaplexFileFromBrowser,
+} from '@metaplex-foundation/js'
+import { UploadChangeParam } from 'antd/lib/upload/interface'
 
 import {
-  Card,
   Col,
   Input,
   Row,
@@ -26,34 +15,13 @@ import {
   Image,
   Button,
   Upload,
-  Checkbox,
 } from 'antd'
-
-import { beforeUpload, fileToBase64, notifyError, notifySuccess } from 'helper'
-import { useMetaplex } from 'hooks/useMetaplex'
-import {
-  Connection,
-  Keypair,
-  PublicKey,
-  SystemProgram,
-  Transaction,
-  TransactionInstruction,
-} from '@solana/web3.js'
-import { rpc, useWalletAddress } from '@sentre/senhub'
-import {
-  MetaplexFile,
-  toMetaplexFileFromBrowser,
-} from '@metaplex-foundation/js'
 import IonIcon from '@sentre/antd-ionicon'
-import { UploadChangeParam } from 'antd/lib/upload/interface'
-import { AnchorProvider } from '@project-serum/anchor'
-import { ConcreteMetaplexAdapter } from 'lib/walletMetaplexAdapter'
 
-const wallet = window.sentre.wallet
+import { beforeUpload, fileToBase64 } from 'helper'
+import { useGenSplToken } from 'hooks/useGenSplToken'
 
 const SPLContent = () => {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
   const [name, setName] = useState('')
   const [symbol, setSymbol] = useState('')
   const [supply, setSupply] = useState('')
@@ -65,171 +33,9 @@ const SPLContent = () => {
   const [freezeAuthority, setFreezeAuthority] = useState(false)
   const [hasMetadataURL, setHasMetadataURL] = useState(false)
   const [image, setImage] = useState<MetaplexFile | string>('')
-  const [isImageLink, setIsImageLink] = useState(false)
+  const [hasImageURL, setHasImageURL] = useState(false)
   const [description, setDescription] = useState('')
-  const nftMachine = useMetaplex()
-  const walletAddress = useWalletAddress()
-
-  const connection = new Connection(rpc)
-
-  console.log(error)
-
-  const genSplToken = async () => {
-    setLoading(true)
-    try {
-      const walletAdapter = await ConcreteMetaplexAdapter.createPublicKey(
-        wallet,
-      )
-      if (!nftMachine) return
-
-      const provider = await new AnchorProvider(connection, walletAdapter, {})
-
-      const mintRent = await getMinimumBalanceForRentExemptMint(connection)
-      const mintAccount = Keypair.generate()
-      let initMint: TransactionInstruction
-      const [metadataPDA] = await PublicKey.findProgramAddress(
-        [
-          Buffer.from('metadata'),
-          PROGRAM_ID.toBuffer(),
-          mintAccount.publicKey.toBuffer(),
-        ],
-        PROGRAM_ID,
-      )
-      let URI: string = ''
-
-      if (hasMetadataURL) {
-        if (metadataURL !== '') {
-          URI = metadataURL
-        } else {
-          setLoading(false)
-          setError('Please provide a metadata URL!')
-        }
-      } else {
-        if (image && typeof image !== 'string') {
-          const ImageUri = await nftMachine.uploadFile(image)
-
-          if (ImageUri) {
-            const uri = await nftMachine.uploadMetadata({
-              name,
-              symbol,
-              description,
-              image,
-            })
-
-            if (uri) {
-              URI = uri
-            }
-          }
-        } else {
-          setLoading(false)
-          setError('Please provide an image file!')
-        }
-      }
-
-      if (URI) {
-        const tokenMetadata: DataV2 = {
-          name,
-          symbol,
-          uri: URI,
-          sellerFeeBasisPoints: 0,
-          creators: null,
-          collection: null,
-          uses: null,
-        }
-
-        const args = {
-          data: tokenMetadata,
-          isMutable: true,
-        }
-
-        const createMintAccountInstruction = await SystemProgram.createAccount({
-          fromPubkey: new PublicKey(walletAddress),
-          newAccountPubkey: mintAccount.publicKey,
-          space: MintLayout.span,
-          lamports: mintRent,
-          programId: TOKEN_PROGRAM_ID,
-        })
-
-        if (freezeAuthority) {
-          initMint = await createInitializeMintInstruction(
-            mintAccount.publicKey,
-            Number(decimal),
-            new PublicKey(walletAddress),
-            new PublicKey(walletAddress),
-            TOKEN_PROGRAM_ID,
-          )
-        } else {
-          initMint = await createInitializeMintInstruction(
-            mintAccount.publicKey,
-            Number(decimal),
-            new PublicKey(walletAddress),
-            null,
-            TOKEN_PROGRAM_ID,
-          )
-        }
-
-        const associatedTokenAccount = await getAssociatedTokenAddress(
-          mintAccount.publicKey,
-          new PublicKey(walletAddress),
-          undefined,
-          TOKEN_PROGRAM_ID,
-          ASSOCIATED_TOKEN_PROGRAM_ID,
-        )
-
-        const createATAInstruction = createAssociatedTokenAccountInstruction(
-          new PublicKey(walletAddress),
-          associatedTokenAccount,
-          new PublicKey(walletAddress),
-          mintAccount.publicKey,
-          TOKEN_PROGRAM_ID,
-          ASSOCIATED_TOKEN_PROGRAM_ID,
-        )
-
-        const mintInstruction = createMintToInstruction(
-          mintAccount.publicKey,
-          associatedTokenAccount,
-          new PublicKey(walletAddress),
-          Number(supply) * 10 ** Number(decimal),
-          undefined,
-          TOKEN_PROGRAM_ID,
-        )
-
-        const MetadataInstruction = createCreateMetadataAccountV2Instruction(
-          {
-            metadata: metadataPDA,
-            mint: mintAccount.publicKey,
-            mintAuthority: new PublicKey(walletAddress),
-            payer: new PublicKey(walletAddress),
-            updateAuthority: new PublicKey(walletAddress),
-          },
-          {
-            createMetadataAccountArgsV2: args,
-          },
-        )
-
-        const createAccountTransaction = new Transaction().add(
-          createMintAccountInstruction,
-          initMint,
-          createATAInstruction,
-          mintInstruction,
-          MetadataInstruction,
-        )
-
-        const createAccountSignature = await provider.sendAndConfirm(
-          createAccountTransaction,
-          [mintAccount],
-        )
-
-        const signature = createAccountSignature.toString()
-
-        notifySuccess('Create token', signature)
-      }
-    } catch (err) {
-      notifyError(err)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { genSplToken, loading } = useGenSplToken()
 
   const onChangeImage = async (file: UploadChangeParam) => {
     const { fileList } = file
@@ -242,39 +48,147 @@ const SPLContent = () => {
     })
   }
 
+  const onGenerate = async () => {
+    genSplToken({
+      name,
+      symbol,
+      description,
+      supply: Number(supply),
+      decimal: Number(decimal),
+      hasMetadataURL,
+      metadataURL,
+      image,
+      freezeAuthority,
+    })
+  }
+
   return (
-    <Row>
+    <Row gutter={[24, 24]}>
       <Col>
         <Typography.Title level={4}>Token Infos</Typography.Title>
-        <Row>
+        <Row gutter={[12, 12]}>
           <Col span={24}>
-            <Typography.Text>Token Name</Typography.Text>
-            <Input value={name} onChange={(e) => setName(e.target.value)} />
+            <Space direction="vertical" size={8} style={{ width: '100%' }}>
+              <Typography.Text type="secondary">NAME</Typography.Text>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter name of token"
+              />
+            </Space>
           </Col>
           <Col span={24}>
-            <Typography.Text>Symbol</Typography.Text>
-            <Input value={symbol} onChange={(e) => setSymbol(e.target.value)} />
+            <Space direction="vertical" size={8} style={{ width: '100%' }}>
+              <Typography.Text type="secondary">SYMBOL</Typography.Text>
+              <Input
+                value={symbol}
+                onChange={(e) => setSymbol(e.target.value)}
+                placeholder="Enter symbol"
+              />
+            </Space>
           </Col>
           <Col span={24}>
-            <Typography.Text>Number of tokens to mint</Typography.Text>
-            <Input value={supply} onChange={(e) => setSupply(e.target.value)} />
+            <Space direction="vertical" size={8} style={{ width: '100%' }}>
+              <Typography.Text type="secondary">NUMBER</Typography.Text>
+              <Input
+                value={supply}
+                onChange={(e) => setSupply(e.target.value)}
+                placeholder="Enter number of tokens to mint"
+              />
+            </Space>
           </Col>
           <Col span={24}>
-            <Typography.Text>Decimal</Typography.Text>
-            <Input
-              value={decimal}
-              onChange={(e) => setDecimal(e.target.value)}
-            />
+            <Space direction="vertical" size={8} style={{ width: '100%' }}>
+              <Typography.Text type="secondary">DECIMAL</Typography.Text>
+              <Input
+                value={decimal}
+                onChange={(e) => setDecimal(e.target.value)}
+                placeholder="Enter decimal"
+              />
+            </Space>
+          </Col>
+          <Col span={24}>
+            <Row gutter={[8, 8]}>
+              <Col span={24}>
+                <Row>
+                  <Col>
+                    <Typography.Text type="secondary">IMAGE</Typography.Text>
+                  </Col>
+                  <Col flex="auto">
+                    <Row justify="end" gutter={[6, 6]}>
+                      <Col>
+                        <Typography.Text>Had Image Url?</Typography.Text>{' '}
+                      </Col>
+                      <Col>
+                        <Switch
+                          checked={hasImageURL}
+                          onChange={() => setHasImageURL(!hasImageURL)}
+                          size="small"
+                        />
+                      </Col>
+                    </Row>
+                  </Col>
+                </Row>
+              </Col>
+              <Col span={24}>
+                {hasImageURL && typeof image === 'string' ? (
+                  <Input
+                    value={image}
+                    onChange={(e) => setImage(e.target.value)}
+                  />
+                ) : displayedImage ? (
+                  <Row gutter={[8, 8]}>
+                    <Col span={24}>
+                      <Image
+                        src={displayedImage.toString() || ''}
+                        preview={false}
+                        width={64}
+                        height={64}
+                        style={{ borderRadius: 8 }}
+                      />
+                    </Col>
+                    <Col>
+                      <Button
+                        onClick={() => {
+                          setImage('')
+                          setDisplayedImage('')
+                        }}
+                        size="small"
+                      >
+                        Remove Image
+                      </Button>
+                    </Col>
+                  </Row>
+                ) : (
+                  <Upload
+                    name="avatar"
+                    listType="picture-card"
+                    accept="image/png,image/jpg,image/webp"
+                    className="avatar-uploader"
+                    showUploadList={false}
+                    beforeUpload={beforeUpload}
+                    onChange={onChangeImage}
+                    maxCount={1}
+                    onRemove={() => {
+                      setImage('')
+                      return true
+                    }}
+                  >
+                    <IonIcon name="add-outline" />
+                  </Upload>
+                )}
+              </Col>
+            </Row>
           </Col>
         </Row>
       </Col>
       <Col span={24}>
         <Row>
           <Col>
-            <Typography.Title level={4}>Metadata</Typography.Title>
+            <Typography.Title level={5}>Metadata</Typography.Title>
           </Col>
-          <Col>
-            <Space style={{ width: '100%' }}>
+          <Col flex="auto">
+            <Space style={{ width: '100%' }} direction="vertical" align="end">
               <Switch
                 checked={hasMetadataURL}
                 onChange={() => setHasMetadataURL(!hasMetadataURL)}
@@ -286,7 +200,7 @@ const SPLContent = () => {
         {hasMetadataURL ? (
           <Row>
             <Col span={24}>
-              <Typography.Text>Metadata URL</Typography.Text>
+              <Typography.Text>URL</Typography.Text>
               <Input
                 value={metadataURL}
                 onChange={(e) => {
@@ -298,103 +212,38 @@ const SPLContent = () => {
         ) : (
           <Row>
             <Col span={24}>
-              <Typography.Text>Description</Typography.Text>
-              <Input
+              <Typography.Text type="secondary">DESCRIPTION</Typography.Text>
+              <Input.TextArea
                 placeholder="Description of the token/project"
                 value={description}
                 onChange={(e) => {
                   setDescription(e.target.value)
                 }}
+                rows={3}
               />
-            </Col>
-            <Col span={24}>
-              <Row>
-                <Col span={12}>
-                  <Typography.Title level={5}>Image</Typography.Title>
-                </Col>
-                <Col span={12}>
-                  <Space
-                    style={{ width: '100%' }}
-                    direction="vertical"
-                    align="end"
-                  >
-                    <Switch
-                      checked={isImageLink}
-                      onChange={() => {
-                        setIsImageLink(!isImageLink)
-                        setImage('')
-                        setDisplayedImage('')
-                      }}
-                      size="small"
-                    />
-                  </Space>
-                </Col>
-                <Col span={24}>
-                  {isImageLink && typeof image === 'string' ? (
-                    <Row>
-                      <Col>
-                        <Input
-                          value={image}
-                          onChange={(e) => setImage(e.target.value)}
-                        />
-                        <Image src={image} preview={false} />
-                      </Col>
-                    </Row>
-                  ) : displayedImage ? (
-                    <Card>
-                      <Image
-                        src={displayedImage.toString() || ''}
-                        preview={false}
-                      />
-                      <Button
-                        onClick={() => {
-                          setImage('')
-                          setDisplayedImage('')
-                        }}
-                      >
-                        Remove Image
-                      </Button>
-                    </Card>
-                  ) : (
-                    <Upload
-                      name="avatar"
-                      listType="picture-card"
-                      accept="image/png,image/jpg,image/webp"
-                      className="avatar-uploader"
-                      showUploadList={false}
-                      // action="https://www.mocky.io/v2/5cc8019d300000980a055e76"
-                      beforeUpload={beforeUpload}
-                      onChange={onChangeImage}
-                      maxCount={1}
-                      onRemove={() => {
-                        setImage('')
-                        return true
-                      }}
-                    >
-                      <IonIcon name="add-outline" />
-                    </Upload>
-                  )}
-                </Col>
-              </Row>
             </Col>
           </Row>
         )}
       </Col>
-      <Col>
-        <Typography.Title level={4}>Authority </Typography.Title>
+      <Col span={24}>
         <Row>
-          <Col span={24}>
-            <Typography.Text>Enable freeze authority</Typography.Text>
-            <Checkbox
-              checked={freezeAuthority}
-              onChange={() => setFreezeAuthority(!freezeAuthority)}
-            />
+          <Col>
+            <Typography.Title level={5}> Authority</Typography.Title>
+          </Col>
+          <Col flex="auto">
+            <Space style={{ width: '100%' }} direction="vertical" align="end">
+              <Switch
+                checked={freezeAuthority}
+                onChange={() => setFreezeAuthority(!freezeAuthority)}
+                size="small"
+              />
+            </Space>
           </Col>
         </Row>
       </Col>
       <Col span={24}>
-        <Button onClick={genSplToken} block loading={loading}>
-          Create Token
+        <Button block loading={loading} type="primary" onClick={onGenerate}>
+          Generate
         </Button>
       </Col>
     </Row>
