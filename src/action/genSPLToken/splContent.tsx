@@ -19,7 +19,7 @@ import {
 import IonIcon from '@sentre/antd-ionicon'
 
 import { beforeUpload, fileToBase64 } from 'helper'
-import { useGenSplToken } from 'hooks/useGenSplToken'
+import { useGenSplToken } from 'hooks/actions/useGenSplToken'
 
 const SPLContent = () => {
   const [name, setName] = useState('')

@@ -25,7 +25,7 @@ import {
 import { useWalletAddress } from '@sentre/senhub'
 import { MetaplexFile } from '@metaplex-foundation/js'
 
-import { useMetaplex } from './useMetaplex'
+import { useMetaplex } from '../useMetaplex'
 import { ConcreteMetaplexAdapter } from 'lib/walletMetaplexAdapter'
 import { notifyError, notifySuccess } from 'helper'
 import configs from 'configs'
