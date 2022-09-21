@@ -1,7 +1,7 @@
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
-import { Col, Row, Segmented, Spin } from 'antd'
+import { Col, Row, Segmented } from 'antd'
 
 import { AppState } from 'model'
 import { setHomeTab } from 'model/main.controller'
