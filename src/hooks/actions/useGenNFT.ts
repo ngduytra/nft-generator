@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux'
 import { util } from '@sentre/senhub'
 
 import { notifyError, notifySuccess } from 'helper'
-import { useMetaplex } from './useMetaplex'
+import { useMetaplex } from '../useMetaplex'
 import { AppState } from 'model'
 import { PublicKey } from '@solana/web3.js'
 
@@ -45,7 +45,10 @@ export const useGenNFT = () => {
         image: hasImageLink ? imageLink : image,
         external_url: externalUrl,
         attributes,
-        collection: collectionInfo,
+        collection: {
+          name: collectionInfo.name,
+          family: collectionInfo.family,
+        },
         properties: {
           files,
           creators,

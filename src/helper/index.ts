@@ -1,7 +1,14 @@
-import { util } from '@sentre/senhub'
-import { Cluster } from '@solana/web3.js'
+import { DataLoader, util } from '@sentre/senhub'
+import { Cluster, PublicKey } from '@solana/web3.js'
 import { message } from 'antd'
 import { RcFile } from 'antd/lib/upload/interface'
+
+import configs from 'configs'
+import { TOKEN_PROGRAM } from 'constant'
+
+const {
+  sol: { connection },
+} = configs
 
 export const clusterAdapter = (net: string): Cluster => {
   if (net === 'devnet') return 'devnet'
@@ -46,4 +53,46 @@ export const beforeUpload = (file: RcFile) => {
     message.error('Image must smaller than 2MB!')
   }
   return isJpgOrPng && isLt2M
+}
+
+export const fetchMetadata = async (url: string) => {
+  return DataLoader.load('fetchMetadata' + url, () =>
+    fetch(url).then((val) => val.json()),
+  )
+}
+
+export const getParsedTokensbyUser = async ({
+  publicAddress,
+  limit = 5000,
+}: {
+  publicAddress: string
+  limit?: number
+}) => {
+  // Get all accounts owned by user
+  // and created by SPL Token Program
+  // this will include all NFTs, Coins, Tokens, etc.
+  const { value: splAccounts } = await connection.getParsedTokenAccountsByOwner(
+    new PublicKey(publicAddress),
+    {
+      programId: new PublicKey(TOKEN_PROGRAM),
+    },
+  )
+
+  // Assume that tokens is SPL token with decimals !== 0 and amount !==0
+  // At this point we filter out other SPL tokens, like NFT e.g.
+  const nftAccounts = splAccounts
+    .filter((t) => {
+      const amount = t.account?.data?.parsed?.info?.tokenAmount?.uiAmount
+      const decimals = t.account?.data?.parsed?.info?.tokenAmount?.decimals
+      return decimals !== 0 && amount !== 0
+    })
+    .map((t) => {
+      const address = t.account?.data?.parsed?.info?.mint
+      return address
+    })
+
+  // if user have tons of tokens return first N
+  const accountsSlice = nftAccounts?.slice(0, limit)
+
+  return accountsSlice
 }

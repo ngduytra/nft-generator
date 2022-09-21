@@ -11,14 +11,14 @@ import {
 import IonIcon from '@sentre/antd-ionicon'
 
 import { NFTCreatingStep } from 'constant'
-import { useGenNFT } from 'hooks/useGenNFT'
+import { useGenNFT } from 'hooks/actions/useGenNFT'
 import { AppState } from 'model'
 
 const Properties = () => {
   const attributes = useSelector((state: AppState) => state.nftSetup.attributes)
   const creators = useSelector((state: AppState) => state.nftSetup.creators)
   const files = useSelector((state: AppState) => state.nftSetup.files)
-  const { genNFT } = useGenNFT()
+  const { genNFT, loading } = useGenNFT()
 
   const dispatch = useDispatch()
 
@@ -312,7 +312,7 @@ const Properties = () => {
             </Button>
           </Col>
           <Col span={12}>
-            <Button type="primary" block onClick={genNFT}>
+            <Button type="primary" block onClick={genNFT} loading={loading}>
               Generate
             </Button>
           </Col>

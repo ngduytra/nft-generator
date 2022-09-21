@@ -1,12 +1,37 @@
-import React from 'react'
-import { Col, Row, Image, Space, Typography } from 'antd'
+import React, { useCallback, useState, useEffect } from 'react'
+import { util } from '@sentre/senhub'
+import { NftTokenAccount } from '@nfteyez/sol-rayz-react'
 
-const NftCard = () => {
+import { Col, Row, Image, Space, Typography } from 'antd'
+import { fetchMetadata } from 'helper'
+import { useAppRouter } from 'hooks/useAppRouter'
+
+type NFTCardProps = {
+  nftInfo: NftTokenAccount
+}
+
+const NftCard = ({ nftInfo }: NFTCardProps) => {
+  const { pushHistory } = useAppRouter()
+  const [nftThumnail, setNFTThumnail] = useState('')
+
+  const getNFTThumbnail = useCallback(async () => {
+    const data = await fetchMetadata(nftInfo.data.uri)
+    setNFTThumnail(data.image)
+  }, [nftInfo.data.uri])
+
+  useEffect(() => {
+    getNFTThumbnail()
+  }, [getNFTThumbnail])
+
   return (
-    <Row className="nft-card" gutter={[8, 8]} justify="center">
+    <Row
+      gutter={[8, 8]}
+      justify="center"
+      onClick={() => pushHistory(`/updateNFT/${nftInfo.mint}`)}
+    >
       <Col>
         <Image
-          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRNh2kOz0Eya2FqnnalLUb2fA67f6aKu2sM4yBGE49RgpSFwUSw"
+          src={nftThumnail}
           preview={false}
           style={{ borderRadius: 12, aspectRatio: '1' }}
         />
@@ -14,11 +39,11 @@ const NftCard = () => {
       <Col span={24}>
         <Row>
           <Col>
-            <Typography.Text>Monkey #12</Typography.Text>
+            <Typography.Text>{nftInfo?.data?.name}</Typography.Text>
           </Col>
           <Col flex={1}>
             <Space direction="vertical" align="end" style={{ width: '100%' }}>
-              2312....2222
+              {util.shortenAddress(nftInfo.mint)}
             </Space>
           </Col>
         </Row>

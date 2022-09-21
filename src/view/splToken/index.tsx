@@ -4,18 +4,20 @@ import { useDispatch } from 'react-redux'
 import { Col, Row, Space, Typography } from 'antd'
 import Layout from 'component/layout'
 import GenSPLToken from 'action/genSPLToken'
-import NftCard from 'component/nftCard'
 
 import { setHomeTab } from 'model/main.controller'
 import { HOME_TAB } from 'constant'
-
-const dummyArray = [1, 2, 3]
+import { useSPLToken } from 'hooks/useSPLToken'
+import SPLCard from 'component/splCard'
 
 const SPLToken = () => {
+  const { splTokens } = useSPLToken()
   const dispatch = useDispatch()
   useEffect(() => {
     dispatch(setHomeTab(HOME_TAB.TOKEN))
   })
+
+  console.log('splTokens: ', splTokens)
 
   return (
     <Layout>
@@ -34,9 +36,9 @@ const SPLToken = () => {
         </Col>
         <Col span={24}>
           <Row gutter={[24, 24]}>
-            {dummyArray.map((val, index) => (
-              <Col span={8}>
-                <NftCard />
+            {splTokens.map((address, index) => (
+              <Col span={8} key={index}>
+                <SPLCard address={address} />
               </Col>
             ))}
           </Row>

@@ -5,6 +5,7 @@ import {
   Metaplex,
   MetaplexFile,
   NftWithToken,
+  UpdateNftInput,
   UploadMetadataInput,
   walletAdapterIdentity,
 } from '@metaplex-foundation/js'
@@ -97,6 +98,10 @@ class MetaplexNFT {
 
   uploadFile = async (data: MetaplexFile) => {
     return await this._metaplex.storage().upload(data)
+  }
+
+  update = async (nft: UpdateNftInput) => {
+    return await this._metaplex.nfts().update(nft).run()
   }
 
   printNewEdition = async (originalMint: PublicKey) => {
