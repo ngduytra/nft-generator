@@ -3,8 +3,10 @@ import { util } from '@sentre/senhub'
 import { NftTokenAccount } from '@nfteyez/sol-rayz-react'
 
 import { Col, Row, Image, Space, Typography } from 'antd'
+
 import { fetchMetadata } from 'helper'
 import { useAppRouter } from 'hooks/useAppRouter'
+import Dummy from '../static/images/dummy.png'
 
 type NFTCardProps = {
   nftInfo: NftTokenAccount
@@ -31,7 +33,7 @@ const NftCard = ({ nftInfo }: NFTCardProps) => {
     >
       <Col>
         <Image
-          src={nftThumnail}
+          src={nftThumnail || Dummy}
           preview={false}
           style={{ borderRadius: 12, aspectRatio: '1' }}
         />

@@ -7,6 +7,11 @@ import { Connection } from '@solana/web3.js'
 type Conf = {
   node: string
   connection: Connection
+  bundlrConfig?: {
+    address: string
+    providerUrl: string
+    timeout: number
+  }
 }
 
 const conf: Record<Net, Conf> = {
@@ -16,6 +21,11 @@ const conf: Record<Net, Conf> = {
   devnet: {
     node: 'https://api.devnet.solana.com',
     connection: new Connection(rpc),
+    bundlrConfig: {
+      address: 'https://devnet.bundlr.network',
+      providerUrl: 'https://api.devnet.solana.com',
+      timeout: 60000,
+    },
   },
 
   /**
