@@ -13,11 +13,11 @@ import SPLCard from 'component/splCard'
 const SPLToken = () => {
   const { splTokens } = useSPLToken()
   const dispatch = useDispatch()
+
   useEffect(() => {
     dispatch(setHomeTab(HOME_TAB.TOKEN))
-  })
-
-  console.log('splTokens: ', splTokens)
+    return () => {}
+  }, [dispatch])
 
   return (
     <Layout>

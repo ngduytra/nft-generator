@@ -19,6 +19,9 @@ const IconFT = ({ address }: IconFTProps) => {
 
   useEffect(() => {
     getTokenInfo()
+    return () => {
+      setTokenInfo(undefined)
+    }
   }, [getTokenInfo])
 
   if (!tokenInfo || !tokenInfo?.logoURI)

@@ -10,11 +10,15 @@ import {
   walletAdapterIdentity,
 } from '@metaplex-foundation/js'
 import { util } from '@sentre/senhub'
-import { Connection, clusterApiUrl, Cluster, PublicKey } from '@solana/web3.js'
+import { PublicKey } from '@solana/web3.js'
 
 import { ConcreteMetaplexAdapter } from './walletMetaplexAdapter'
+import configs from 'configs'
 
-const DEFAULT_RPC_ENDPOINT = 'mainnet-beta'
+const {
+  sol: { connection, bundlrConfig },
+} = configs
+
 const wallet = window.sentre.wallet
 
 class MetaplexNFT {
@@ -25,9 +29,7 @@ class MetaplexNFT {
     this._metaplex = metaplex
   }
 
-  static async initializeMetaplex(rpcEndpoint: Cluster = DEFAULT_RPC_ENDPOINT) {
-    const connection = new Connection(clusterApiUrl('devnet'))
-
+  static async initializeMetaplex() {
     if (!MetaplexNFT.instance) {
       const newMetaplex = Metaplex.make(connection)
         .use(
@@ -35,13 +37,7 @@ class MetaplexNFT {
             await ConcreteMetaplexAdapter.createPublicKey(wallet),
           ),
         )
-        .use(
-          bundlrStorage({
-            address: 'https://devnet.bundlr.network',
-            providerUrl: 'https://api.devnet.solana.com',
-            timeout: 60000,
-          }),
-        )
+        .use(bundlrStorage(bundlrConfig!))
 
       MetaplexNFT.instance = new MetaplexNFT(newMetaplex)
     }

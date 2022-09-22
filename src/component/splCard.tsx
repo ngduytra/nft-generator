@@ -19,20 +19,37 @@ const SPLCard = ({ address }: NFTCardProps) => {
   const metaplex = useMetaplex()
 
   const getTokenInfo = useCallback(async () => {
-    const nft = await metaplex?.findByMint(new PublicKey(address))
-    const logo = nft?.json?.image
-    const newName = nft?.json?.name
+    try {
+      if (!metaplex) return
+      const nft = await metaplex.findByMint(new PublicKey(address))
+      const logo = nft?.json?.image
+      const newName = nft?.json?.name
 
-    if (logo !== undefined) {
-      setSPLThumnail(logo)
-    }
-    if (newName !== undefined) {
-      setName(newName)
+      if (logo !== undefined) {
+        setSPLThumnail(logo)
+      }
+      if (newName !== undefined) {
+        setName(newName)
+      }
+    } catch (error) {
+      const err = (error as any)?.message
+      // the token is not an nft if there is no metadata account associated
+      if (
+        err.includes(
+          'No Metadata account could be found for the provided mint address',
+        )
+      ) {
+        setSPLThumnail('')
+      }
     }
   }, [address, metaplex])
 
   useEffect(() => {
     getTokenInfo()
+    return () => {
+      setSPLThumnail('')
+      setName('')
+    }
   }, [getTokenInfo])
 
   return (

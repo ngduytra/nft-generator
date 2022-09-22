@@ -1,11 +1,11 @@
 import { useCallback, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { util } from '@sentre/senhub'
+import { PublicKey } from '@solana/web3.js'
 
 import { notifyError, notifySuccess } from 'helper'
 import { useMetaplex } from '../useMetaplex'
 import { AppState } from 'model'
-import { PublicKey } from '@solana/web3.js'
 
 export const useGenNFT = () => {
   const {
@@ -56,8 +56,9 @@ export const useGenNFT = () => {
       })
       if (isCollection) {
         await nftMachine.createNFT({
-          uri: uri,
-          name: name,
+          uri,
+          symbol,
+          name,
           sellerFeeBasisPoints,
           isCollection,
           creators: creatorAdapt,
@@ -67,8 +68,9 @@ export const useGenNFT = () => {
       }
       if (!util.isAddress(collectionInfo?.address as string)) {
         await nftMachine.createNFT({
-          uri: uri,
-          name: name,
+          uri,
+          symbol,
+          name,
           sellerFeeBasisPoints,
           creators: creatorAdapt,
         })
@@ -76,8 +78,9 @@ export const useGenNFT = () => {
       }
 
       await nftMachine.createNFT({
-        uri: uri,
-        name: name,
+        uri,
+        symbol,
+        name,
         sellerFeeBasisPoints,
         collection: new PublicKey(`${collectionInfo?.address}`),
       })
