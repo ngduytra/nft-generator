@@ -1,6 +1,6 @@
 // import { Fragment, useCallback, useEffect, useState } from 'react'
 // import { useDispatch } from 'react-redux'
-// import { useWalletAddress } from '@sentre/senhub/dist'
+// import { useWalletAddress } from '@sentre/senhub'
 // import { PublicKey } from '@solana/web3.js'
 
 // import { initSPLs } from 'model/spl.controller'
