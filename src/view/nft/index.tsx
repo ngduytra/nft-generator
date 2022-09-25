@@ -1,5 +1,5 @@
 import { useWalletNfts } from '@nfteyez/sol-rayz-react'
-import { useWalletAddress } from '@sentre/senhub/dist'
+import { useWalletAddress } from '@sentre/senhub'
 
 import GenNFT from 'action/genNFT'
 import { Col, Row, Space, Typography } from 'antd'
