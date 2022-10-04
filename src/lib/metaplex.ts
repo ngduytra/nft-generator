@@ -19,8 +19,6 @@ const {
   sol: { connection, bundlrConfig },
 } = configs
 
-const wallet = window.sentre.wallet
-
 class MetaplexNFT {
   public static instance: MetaplexNFT
   private _metaplex: Metaplex
@@ -34,7 +32,7 @@ class MetaplexNFT {
       const newMetaplex = Metaplex.make(connection)
         .use(
           walletAdapterIdentity(
-            await ConcreteMetaplexAdapter.createPublicKey(wallet),
+            await ConcreteMetaplexAdapter.createPublicKey(window.sentre.wallet),
           ),
         )
         .use(bundlrStorage(bundlrConfig!))
