@@ -34,8 +34,6 @@ const {
   sol: { connection },
 } = configs
 
-const wallet = window.sentre.wallet
-
 type GenSplTokenProps = {
   name: string
   symbol: string
@@ -70,7 +68,7 @@ export const useGenSplToken = () => {
         if (!nftMachine) return
 
         const walletAdapter = await ConcreteMetaplexAdapter.createPublicKey(
-          wallet,
+          window.sentre.wallet,
         )
         const provider = new AnchorProvider(connection, walletAdapter, {})
 
